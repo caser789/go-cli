@@ -1,5 +1,9 @@
 package main
 
+import (
+    "os"
+)
+
 func main() {
 	app := App{
 		Name:        "math",
@@ -22,7 +26,7 @@ func main() {
 				Description: "Divide 2 and 2",
 				Action:      DoDivide}}}
 
-	app.Run("add")
+	app.Run(os.Args[1])
 }
 
 func DoAdd(name string) {
@@ -56,5 +60,9 @@ type Command struct {
 type Action func(name string)
 
 func (a App) Run(command string) {
-	a.Commands[0].Action(a.Commands[0].Name)
+    for _, c := range a.Commands {
+        if (c.Name == command) {
+            c.Action(command)
+        }
+    }
 }
