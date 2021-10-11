@@ -1,68 +1,47 @@
-package main
+package cli
 
-import (
-    "os"
-)
+import "os"
 
-func main() {
-	app := App{
-		Name:        "math",
-		Description: "a simple command line math utility",
-		Commands: []Command{
-			{
-				Name:        "add",
-				Description: "Add 2 and 2",
-				Action:      DoAdd},
-			{
-				Name:        "subtract",
-				Description: "Subtract 2 and 2",
-				Action:      DoSubtract},
-			{
-				Name:        "multiply",
-				Description: "Multiply 2 and 2",
-				Action:      DoMultiply},
-			{
-				Name:        "divide",
-				Description: "Divide 2 and 2",
-				Action:      DoDivide}}}
+// The name of the program. Defaults to os.Args[0]
+var Name = os.Args[0]
 
-	app.Run(os.Args[1])
+// Description of the program.
+var Usage = ""
+
+// Version of the program
+var Version = "0.0.0"
+
+// List of commands to execute
+var Commands []Command = nil
+
+var DefaultAction = ShowHelp
+
+func Run(args []string) {
+	if len(args) > 1 {
+		command := args[1]
+		commands := CommandsWithDefaults()
+		for _, c := range commands {
+			if c.Name == command {
+				c.Action(command)
+				return
+			}
+		}
+	}
+
+	// Run default Action
+	DefaultAction("")
 }
 
-func DoAdd(name string) {
-  println("2+2=", 2+2)
-}
-
-func DoSubtract(name string) {
-  println("2-2=", 2-2)
-}
-
-func DoMultiply(name string) {
-  println("2*2=", 2*2)
-}
-
-func DoDivide(name string) {
-  println("2/2=", 2/2)
-}
-
-type App struct {
-	Name        string
-	Description string
-	Commands    []Command
+func CommandsWithDefaults() []Command {
+	return append(append([]Command(nil), HelpCommand), Commands...)
 }
 
 type Command struct {
 	Name        string
+	ShortName   string
+	Usage       string
 	Description string
 	Action      Action
 }
 
 type Action func(name string)
-
-func (a App) Run(command string) {
-    for _, c := range a.Commands {
-        if (c.Name == command) {
-            c.Action(command)
-        }
-    }
-}
