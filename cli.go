@@ -18,21 +18,22 @@ var Commands []Command
 var Flags []Flag
 
 // The action to execute when no subcommands are specified
-var DefaultAction = ShowHelp
+var Action = ShowHelp
 
 func Run(args []string) {
+	context := Context{}
 	if len(args) > 1 {
 		name := args[1]
 		for _, c := range append(Commands, HelpCommand) {
 			if c.Name == name || c.ShortName == name {
-				c.Action(name)
+				c.Action(context)
 				return
 			}
 		}
 	}
 
 	// Run default Action
-	DefaultAction("")
+	Action(context)
 }
 
 type Command struct {
@@ -40,8 +41,9 @@ type Command struct {
 	ShortName   string
 	Usage       string
 	Description string
-	Action      Action
+	Action      Handler
 	Flags       flag.FlagSet
 }
 
-type Action func(name string)
+type Context struct{}
+type Handler func(context Context)
