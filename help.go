@@ -1,62 +1,54 @@
 package cli
 
 import "os"
-import "log"
-
 import "text/tabwriter"
 import "text/template"
 
 type HelpData struct {
 	Name     string
 	Usage    string
-	Commands []Command
 	Version  string
+	Commands []Command
+	Flags    []Flag
 }
 
 var HelpCommand = Command{
 	Name:      "help",
 	ShortName: "h",
-	Usage:     "View help topics",
-	Action:    ShowHelp,
+	Usage:     "Shows a list of commands or help for one command",
 }
 
-var helpTemplate = `NAME:
-  {{.Name}} - {{.Usage}}
+func init() {
+	HelpCommand.Action = ShowHelp
+}
+
+func ShowHelp(name string) {
+	helpTemplate := `NAME:
+    {{.Name}} - {{.Usage}}
 
 USAGE:
-  {{.Name}} [global-options] COMMAND [command-options]
+    {{.Name}} [global options] command [command options] [arguments...]
 
 VERSION:
-  {{.Version}}
+    {{.Version}}
 
 COMMANDS:
-  {{range .Commands}}{{.Name}}{{ "\t" }}{{.Usage}}
-  {{end}}
-
+    {{range .Commands}}{{.Name}}{{with .ShortName}}, {{.}}{{end}}{{ "\t" }}{{.Usage}}
+    {{end}}
+GLOBAL OPTIONS
+    {{range .Flags}}{{.}}
+    {{end}}
 `
-
-var ShowHelp = func(name string) {
-
 	data := HelpData{
 		Name,
 		Usage,
-		Commands,
 		Version,
+		append(Commands, HelpCommand),
+		Flags,
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 8, 1, '\t', 0)
 	t := template.Must(template.New("help").Parse(helpTemplate))
-	err := t.Execute(w, data)
+	t.Execute(w, data)
 	w.Flush()
-	if err != nil {
-		log.Println("executing template:", err)
-	}
-	// fmt.Printf("Usage: %v [global-options] COMMAND [command-options]\n\n", Name)
-	// if Commands != nil {
-	// 	fmt.Printf("The most commonly used %v commands are:\n", Name)
-	// 	for _, c := range Commands {
-	// 		fmt.Fprintln(w, "   "+c.Name+"\t"+c.Usage)
-	// 	}
-	// 	w.Flush()
-	// }
 }
