@@ -6,7 +6,7 @@ import "os"
 var Name = os.Args[0]
 
 // Description of the program.
-var Usage = ""
+var Usage = "<No Description>"
 
 // Version of the program
 var Version = "0.0.0"
