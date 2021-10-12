@@ -23,19 +23,31 @@ func NewApp() *App {
 		Name:    os.Args[0],
 		Usage:   "A new cli application",
 		Version: "0.0.0",
-		Action:  ShowHelp,
+		Action:  helpCommand.Action,
 	}
 }
 
 func (a *App) Run(arguments []string) {
-	set := flagSet(a.Flags)
+	// append help to commands
+	a.Commands = append(a.Commands, helpCommand)
+	// append version to flags
+	a.Flags = append(a.Flags, BoolFlag{"version", "print the version"})
+
+	// parse flags
+	set := flagSet(a.Name, a.Flags)
 	set.Parse(arguments[1:])
 
 	context := NewContext(a, set, set)
+
+	// check version
+	if context.GlobalBool("version") {
+		showVersion(context)
+		return
+	}
 	args := context.Args()
 	if len(args) > 0 {
 		name := args[0]
-		for _, c := range append(a.Commands, HelpCommand) {
+		for _, c := range a.Commands {
 			if c.HasName(name) {
 				c.Run(context)
 				return
