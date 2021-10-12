@@ -30,7 +30,7 @@ func NewApp() *App {
 	}
 }
 
-func (a *App) Run(arguments []string) {
+func (a *App) Run(arguments []string) error {
 	// append help to commands
 	if a.Command(helpCommand.Name) == nil {
 		a.Commands = append(a.Commands, helpCommand)
@@ -50,7 +50,7 @@ func (a *App) Run(arguments []string) {
 		fmt.Println("Incorrect Usage.")
 		ShowAppHelp(context)
 		fmt.Println("")
-		os.Exit(1)
+		return err
 	}
 
 	checkHelp(context)
@@ -62,12 +62,13 @@ func (a *App) Run(arguments []string) {
 		c := a.Command(name)
 		if c != nil {
 			c.Run(context)
-			return
+			return nil
 		}
 	}
 
 	// Run default Action
 	a.Action(context)
+	return nil
 }
 
 func (a *App) Command(name string) *Command {
