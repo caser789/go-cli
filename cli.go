@@ -47,5 +47,4 @@ type Command struct {
 	Flags       []Flag
 }
 
-type Context struct{}
 type Handler func(context Context)
