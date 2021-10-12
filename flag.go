@@ -8,6 +8,10 @@ type Flag interface {
 	Apply(*flag.FlagSet)
 }
 
+type SliceFlag interface {
+	Value() []string
+}
+
 func flagSet(name string, flags []Flag) *flag.FlagSet {
 	set := flag.NewFlagSet(name, flag.ContinueOnError)
 	for _, f := range flags {
@@ -21,6 +25,34 @@ type BoolFlag struct {
 	Usage string
 }
 
+type StringSlice []string
+
+func (i *StringSlice) Set(value string) error {
+	*i = append(*i, value)
+	return nil
+}
+
+func (i *StringSlice) String() string {
+	return fmt.Sprintf("%s", *i)
+}
+
+func (i *StringSlice) Value() []string {
+	return *i
+}
+
+type StringSliceFlag struct {
+	Name  string
+	Value *StringSlice
+	Usage string
+}
+
+func (f StringSliceFlag) String() string {
+	return fmt.Sprintf("%s%v '%v'\t%v", prefixFor(f.Name), f.Name, "-"+f.Name+" option -"+f.Name+" option", f.Usage)
+}
+
+func (f StringSliceFlag) Apply(set *flag.FlagSet) {
+	set.Var(f.Value, f.Name, f.Usage)
+}
 func (f BoolFlag) String() string {
 	return fmt.Sprintf("%s%v\t%v", prefixFor(f.Name), f.Name, f.Usage)
 }
