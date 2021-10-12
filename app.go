@@ -15,7 +15,7 @@ type App struct {
 	Commands []Command
 	Flags    []Flag
 	// The action to execute when no subcommands are specified
-	Action Handler
+	Action func(context *Context)
 }
 
 func NewApp() *App {
