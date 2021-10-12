@@ -29,10 +29,8 @@ func Run(arguments []string) {
 	if len(args) > 0 {
 		name := args[0]
 		for _, c := range append(Commands, HelpCommand) {
-			if c.Name == name || c.ShortName == name {
-				locals := flagSet(c.Flags)
-				locals.Parse(args[1:])
-				c.Action(NewContext(locals, set))
+			if c.HasName(name) {
+				c.Run(context)
 				return
 			}
 		}
