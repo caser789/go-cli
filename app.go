@@ -13,7 +13,8 @@ type App struct {
 	Version string
 	// List of commands to execute
 	Commands []Command
-	Flags    []Flag
+	// List of flags to parse
+	Flags []Flag
 	// The action to execute when no subcommands are specified
 	Action func(context *Context)
 }
@@ -31,19 +32,23 @@ func (a *App) Run(arguments []string) {
 	// append help to commands
 	a.Commands = append(a.Commands, helpCommand)
 	// append version to flags
-	a.Flags = append(a.Flags, BoolFlag{"version", "print the version"})
+	a.Flags = append(
+		a.Flags,
+		BoolFlag{"version", "print the version"},
+		helpFlag{"show help"},
+	)
 
 	// parse flags
 	set := flagSet(a.Name, a.Flags)
-	set.Parse(arguments[1:])
+	err := set.Parse(arguments[1:])
+	if err != nil {
+		os.Exit(1)
+	}
 
 	context := NewContext(a, set, set)
+	checkHelp(context)
+	checkVersion(context)
 
-	// check version
-	if context.GlobalBool("version") {
-		showVersion(context)
-		return
-	}
 	args := context.Args()
 	if len(args) > 0 {
 		name := args[0]
