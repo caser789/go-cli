@@ -65,6 +65,26 @@ func TestIntFlagHelpOutput(t *testing.T) {
 	}
 }
 
+var float64FlagTests = []struct {
+	name     string
+	expected string
+}{
+	{"help", "--help '0'\t"},
+	{"h", "-h '0'\t"},
+}
+
+func TestFloat64FlagHelpOutput(t *testing.T) {
+
+	for _, test := range float64FlagTests {
+		flag := cli.Float64Flag{Name: test.name}
+		output := flag.String()
+
+		if output != test.expected {
+			t.Errorf("%s does not match %s", output, test.expected)
+		}
+	}
+}
+
 func TestParseMultiString(t *testing.T) {
 	(&cli.App{
 		Flags: []cli.Flag{
@@ -79,21 +99,6 @@ func TestParseMultiString(t *testing.T) {
 			}
 		},
 	}).Run([]string{"run", "-s", "10"})
-
-	/*(&cli.App{
-		Flags: []cli.Flag{
-			cli.StringFlag{Name: "serve, s"},
-		},
-		Action: func(ctx *cli.Context) {
-			if ctx.String("serve") != "10" {
-				t.Errorf("main name not set")
-			}
-			if ctx.String("s") != "10" {
-				t.Errorf("short name not set")
-			}
-		},
-	}).Run([]string{"run", "--serve", "10"})
-	*/
 }
 
 func TestParseMultiInt(t *testing.T) {

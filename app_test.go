@@ -29,7 +29,7 @@ func TestApp_Run(t *testing.T) {
 
 	app := cli.NewApp()
 	app.Action = func(c *cli.Context) {
-		s = s + c.Args()[0]
+		s = s + c.Args().First()
 	}
 
 	err := app.Run([]string{"command", "foo"})
@@ -76,7 +76,7 @@ func TestApp_CommandWithArgBeforeFlags(t *testing.T) {
 		},
 		Action: func(c *cli.Context) {
 			parsedOption = c.String("option")
-			firstArg = c.Args()[0]
+			firstArg = c.Args().First()
 		},
 	}
 	app.Commands = []cli.Command{command}
@@ -85,6 +85,21 @@ func TestApp_CommandWithArgBeforeFlags(t *testing.T) {
 
 	expect(t, parsedOption, "my-option")
 	expect(t, firstArg, "my-arg")
+}
+
+func TestApp_Float64Flag(t *testing.T) {
+	var meters float64
+
+	app := cli.NewApp()
+	app.Flags = []cli.Flag{
+		cli.Float64Flag{Name: "height", Value: 1.5, Usage: "Set the height, in meters"},
+	}
+	app.Action = func(c *cli.Context) {
+		meters = c.Float64("height")
+	}
+
+	app.Run([]string{"", "--height", "1.93"})
+	expect(t, meters, 1.93)
 }
 
 func TestApp_ParseSliceFlags(t *testing.T) {
@@ -104,7 +119,7 @@ func TestApp_ParseSliceFlags(t *testing.T) {
 			parsedIntSlice = c.IntSlice("p")
 			parsedStringSlice = c.StringSlice("ip")
 			// parsedOption = c.String("option")
-			// firstArg = c.Args()[0]
+			// firstArg = c.Args().First()
 		},
 	}
 	app.Commands = []cli.Command{command}

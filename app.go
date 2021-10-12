@@ -41,7 +41,7 @@ func (a *App) Run(arguments []string) error {
 	}
 
 	//append version/help flags
-	a.appendFlag(BoolFlag{"version", "print the version"})
+	a.appendFlag(BoolFlag{"version, v", "print the version"})
 	a.appendFlag(BoolFlag{"help, h", "show help"})
 
 	// parse flags
@@ -75,8 +75,8 @@ func (a *App) Run(arguments []string) error {
 	}
 
 	args := context.Args()
-	if len(args) > 0 {
-		name := args[0]
+	if args.Present() {
+		name := args.First()
 		c := a.Command(name)
 		if c != nil {
 			return c.Run(context)
