@@ -2,6 +2,7 @@ package cli_test
 
 import (
 	cli "github.com/caser789/go-cli"
+	"reflect"
 	"testing"
 )
 
@@ -133,4 +134,20 @@ func TestParseMultiBool(t *testing.T) {
 		},
 	}
 	a.Run([]string{"run", "--serve"})
+}
+
+func TestParseMultiStringSlice(t *testing.T) {
+	(&cli.App{
+		Flags: []cli.Flag{
+			cli.StringSliceFlag{Name: "serve, s", Value: &cli.StringSlice{}},
+		},
+		Action: func(ctx *cli.Context) {
+			if !reflect.DeepEqual(ctx.StringSlice("serve"), []string{"10", "20"}) {
+				t.Errorf("main name not set")
+			}
+			if !reflect.DeepEqual(ctx.StringSlice("s"), []string{"10", "20"}) {
+				t.Errorf("short name not set")
+			}
+		},
+	}).Run([]string{"run", "-s", "10", "-s", "20"})
 }
