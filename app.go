@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
 )
 
@@ -40,12 +42,17 @@ func (a *App) Run(arguments []string) {
 
 	// parse flags
 	set := flagSet(a.Name, a.Flags)
+	set.SetOutput(ioutil.Discard)
 	err := set.Parse(arguments[1:])
+	context := NewContext(a, set, set)
+
 	if err != nil {
+		fmt.Println("Incorrect Usage.")
+		ShowAppHelp(context)
+		fmt.Println("")
 		os.Exit(1)
 	}
 
-	context := NewContext(a, set, set)
 	checkHelp(context)
 	checkVersion(context)
 

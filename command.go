@@ -1,5 +1,11 @@
 package cli
 
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+)
+
 type Command struct {
 	Name        string
 	ShortName   string
@@ -17,7 +23,15 @@ func (c Command) Run(ctx *Context) {
 	)
 
 	set := flagSet(c.Name, c.Flags)
-	set.Parse(ctx.Args()[1:])
+	set.SetOutput(ioutil.Discard)
+	err := set.Parse(ctx.Args()[1:])
+
+	if err != nil {
+		fmt.Println("Incorrect Usage.")
+		ShowCommandHelp(ctx, c.Name)
+		fmt.Println("")
+		os.Exit(1)
+	}
 
 	context := NewContext(ctx.App, set, ctx.globalSet)
 	checkCommandHelp(context, c.Name)
