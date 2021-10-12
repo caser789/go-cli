@@ -3,20 +3,27 @@ package cli
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"strings"
 )
 
+// Command is a subcommand for a cli.App.
 type Command struct {
-	Name        string
-	ShortName   string
-	Usage       string
+	// The name of the command
+	Name string
+	// short name of the command. Typically one character
+	ShortName string
+	// A short description of the usage of this command
+	Usage string
+	// A longer explaination of how the command works
 	Description string
-	Action      func(context *Context)
-	Flags       []Flag
+	// The function to call when this command is invoked
+	Action func(context *Context)
+	// List of flags to parse
+	Flags []Flag
 }
 
-func (c Command) Run(ctx *Context) {
+// Invokes the command given the context, parses ctx.Args() to generate command-specific flags
+func (c Command) Run(ctx *Context) error {
 	// append help to flags
 	c.Flags = append(
 		c.Flags,
@@ -44,18 +51,29 @@ func (c Command) Run(ctx *Context) {
 	}
 
 	if err != nil {
-		fmt.Println("Incorrect Usage.")
+		fmt.Print("Incorrect Usage.\n\n")
 		ShowCommandHelp(ctx, c.Name)
 		fmt.Println("")
-		os.Exit(1)
+		return err
 	}
 
+	nerr := normalizeFlags(c.Flags, set)
+	if nerr != nil {
+		fmt.Println(nerr)
+		fmt.Println("")
+		ShowCommandHelp(ctx, c.Name)
+		fmt.Println("")
+		return nerr
+	}
 	context := NewContext(ctx.App, set, ctx.globalSet)
-	checkCommandHelp(context, c.Name)
-
+	if checkCommandHelp(context, c.Name) {
+		return nil
+	}
 	c.Action(context)
+	return nil
 }
 
+// Returns true if Command.Name or Command.ShortName matches given name
 func (c Command) HasName(name string) bool {
 	return c.Name == name || c.ShortName == name
 }

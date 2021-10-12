@@ -88,7 +88,8 @@ func TestApp_CommandWithArgBeforeFlags(t *testing.T) {
 }
 
 func TestApp_ParseSliceFlags(t *testing.T) {
-	var parsedOption, firstArg string
+	// var parsedOption string
+	// var firstArg string
 	var parsedIntSlice []int
 	var parsedStringSlice []string
 
@@ -102,8 +103,8 @@ func TestApp_ParseSliceFlags(t *testing.T) {
 		Action: func(c *cli.Context) {
 			parsedIntSlice = c.IntSlice("p")
 			parsedStringSlice = c.StringSlice("ip")
-			parsedOption = c.String("option")
-			firstArg = c.Args()[0]
+			// parsedOption = c.String("option")
+			// firstArg = c.Args()[0]
 		},
 	}
 	app.Commands = []cli.Command{command}
@@ -137,7 +138,7 @@ func TestApp_ParseSliceFlags(t *testing.T) {
 	var expectedStringSlice = []string{"8.8.8.8", "8.8.4.4"}
 
 	if !IntsEquals(parsedIntSlice, expectedIntSlice) {
-		t.Errorf("%s does not match %s", parsedIntSlice, expectedIntSlice)
+		t.Errorf("%v does not match %v", parsedIntSlice, expectedIntSlice)
 	}
 
 	if !StrsEquals(parsedStringSlice, expectedStringSlice) {
