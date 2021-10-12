@@ -20,10 +20,11 @@ var Flags []Flag
 var Action = ShowHelp
 
 func Run(args []string) {
+
 	set := flagSet(Flags)
 	set.Parse(args[1:])
 
-	context := Context{}
+	context := NewContext(set)
 	if len(args) > 1 {
 		name := args[1]
 		for _, c := range append(Commands, HelpCommand) {
@@ -38,13 +39,4 @@ func Run(args []string) {
 	Action(context)
 }
 
-type Command struct {
-	Name        string
-	ShortName   string
-	Usage       string
-	Description string
-	Action      Handler
-	Flags       []Flag
-}
-
-type Handler func(context Context)
+type Handler func(context *Context)
