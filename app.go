@@ -21,6 +21,9 @@ type App struct {
 	Flags []Flag
 	// The action to execute when no subcommands are specified
 	Action func(context *Context)
+	// An action to execute before any subcommands are run, but after the context is ready
+	// If a non-nil error is returned, no subcommands are run
+	Before func(context *Context) error
 }
 
 // Creates a new cli Application with some reasonable defaults for Name, Usage, Version and Action.
@@ -72,6 +75,13 @@ func (a *App) Run(arguments []string) error {
 
 	if checkVersion(context) {
 		return nil
+	}
+
+	if a.Before != nil {
+		err := a.Before(context)
+		if err != nil {
+			return err
+		}
 	}
 
 	args := context.Args()
