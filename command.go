@@ -20,6 +20,8 @@ type Command struct {
 	Action func(context *Context)
 	// List of flags to parse
 	Flags []Flag
+	// The function to call when checking for bash command completions
+	BashComplete func(context *Context)
 }
 
 // Invokes the command given the context, parses ctx.Args() to generate command-specific flags
@@ -67,6 +69,9 @@ func (c Command) Run(ctx *Context) error {
 		return nerr
 	}
 	context := NewContext(ctx.App, set, ctx.globalSet)
+	if checkCommandCompletions(context, c.Name) {
+		return nil
+	}
 	if checkCommandHelp(context, c.Name) {
 		return nil
 	}

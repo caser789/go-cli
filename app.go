@@ -46,6 +46,7 @@ func (a *App) Run(arguments []string) error {
 	}
 
 	//append version/help flags
+	a.appendFlag(BoolFlag{"generate-bash-completion", ""})
 	a.appendFlag(BoolFlag{"version, v", "print the version"})
 	a.appendFlag(BoolFlag{"help, h", "show help"})
 
@@ -69,6 +70,10 @@ func (a *App) Run(arguments []string) error {
 		ShowAppHelp(context)
 		fmt.Println("")
 		return err
+	}
+
+	if checkCompletions(context) {
+		return nil
 	}
 
 	if checkHelp(context) {

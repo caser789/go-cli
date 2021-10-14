@@ -122,3 +122,39 @@ func checkCommandHelp(c *Context, name string) bool {
 
 	return false
 }
+
+// Prints the lists of commands within a given context
+func ShowCompletions(c *Context) {
+	for _, command := range c.App.Commands {
+		fmt.Println(command.Name)
+		if command.ShortName != "" {
+			fmt.Println(command.ShortName)
+		}
+	}
+}
+
+// Prints the custom completions for a given command
+func ShowCommandCompletions(ctx *Context, command string) {
+	c := ctx.App.Command(command)
+	if c != nil && c.BashComplete != nil {
+		c.BashComplete(ctx)
+	}
+}
+
+func checkCompletions(c *Context) bool {
+	if c.GlobalBool("generate-bash-completion") {
+		ShowCompletions(c)
+		return true
+	}
+
+	return false
+}
+
+func checkCommandCompletions(c *Context, name string) bool {
+	if c.Bool("generate-bash-completion") {
+		ShowCommandCompletions(c, name)
+		return true
+	}
+
+	return false
+}
