@@ -1,10 +1,12 @@
 package cli_test
 
 import (
+	"flag"
 	"fmt"
-	cli "github.com/caser789/go-cli"
 	"os"
 	"testing"
+
+	cli "github.com/caser789/go-cli"
 )
 
 func ExampleApp() {
@@ -14,7 +16,7 @@ func ExampleApp() {
 	app := cli.NewApp()
 	app.Name = "greet"
 	app.Flags = []cli.Flag{
-		cli.StringFlag{"name", "bob", "a name to say"},
+		cli.StringFlag{Name: "name", Value: "bob", Usage: "a name to say"},
 	}
 	app.Action = func(c *cli.Context) {
 		fmt.Printf("Hello %v\n", c.String("name"))
@@ -22,6 +24,43 @@ func ExampleApp() {
 	app.Run(os.Args)
 	// Output:
 	// Hello Jeremy
+}
+
+func ExampleAppSubcommand() {
+	// set args for examples sake
+	os.Args = []string{"say", "hi", "english", "--name", "Jeremy"}
+	app := cli.NewApp()
+	app.Name = "say"
+	app.Commands = []cli.Command{
+		{
+			Name:        "hello",
+			ShortName:   "hi",
+			Usage:       "use it to see a description",
+			Description: "This is how we describe hello the function",
+			Subcommands: []cli.Command{
+				{
+					Name:        "english",
+					ShortName:   "en",
+					Usage:       "sends a greeting in english",
+					Description: "greets someone in english",
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "name",
+							Value: "Bob",
+							Usage: "Name of the person to greet",
+						},
+					},
+					Action: func(c *cli.Context) {
+						fmt.Println("Hello,", c.String("name"))
+					},
+				},
+			},
+		},
+	}
+
+	app.Run(os.Args)
+	// Output:
+	// Hello, Jeremy
 }
 
 func ExampleAppHelp() {
@@ -50,12 +89,45 @@ func ExampleAppHelp() {
 	//    describeit - use it to see a description
 	//
 	// USAGE:
-	//    command describeit [command options] [arguments...]
+	//    command describeit [arguments...]
 	//
 	// DESCRIPTION:
 	//    This is how we describe describeit the function
-	//
-	// OPTIONS:
+}
+
+func ExampleAppBashComplete() {
+	// set args for examples sake
+	os.Args = []string{"greet", "--generate-bash-completion"}
+
+	app := cli.NewApp()
+	app.Name = "greet"
+	app.EnableBashCompletion = true
+	app.Commands = []cli.Command{
+		{
+			Name:        "describeit",
+			ShortName:   "d",
+			Usage:       "use it to see a description",
+			Description: "This is how we describe describeit the function",
+			Action: func(c *cli.Context) {
+				fmt.Printf("i like to describe things")
+			},
+		}, {
+			Name:        "next",
+			Usage:       "next example",
+			Description: "more stuff to see when generating bash completion",
+			Action: func(c *cli.Context) {
+				fmt.Printf("the next example")
+			},
+		},
+	}
+
+	app.Run(os.Args)
+	// Output:
+	// describeit
+	// d
+	// next
+	// help
+	// h
 }
 
 func TestApp_Run(t *testing.T) {
@@ -106,7 +178,7 @@ func TestApp_CommandWithArgBeforeFlags(t *testing.T) {
 	command := cli.Command{
 		Name: "cmd",
 		Flags: []cli.Flag{
-			cli.StringFlag{"option", "", "some option"},
+			cli.StringFlag{Name: "option", Value: "", Usage: "some option"},
 		},
 		Action: func(c *cli.Context) {
 			parsedOption = c.String("option")
@@ -137,8 +209,7 @@ func TestApp_Float64Flag(t *testing.T) {
 }
 
 func TestApp_ParseSliceFlags(t *testing.T) {
-	// var parsedOption string
-	// var firstArg string
+	var parsedOption, firstArg string
 	var parsedIntSlice []int
 	var parsedStringSlice []string
 
@@ -146,14 +217,14 @@ func TestApp_ParseSliceFlags(t *testing.T) {
 	command := cli.Command{
 		Name: "cmd",
 		Flags: []cli.Flag{
-			cli.IntSliceFlag{"p", &cli.IntSlice{}, "set one or more ip addr"},
-			cli.StringSliceFlag{"ip", &cli.StringSlice{}, "set one or more ports to open"},
+			cli.IntSliceFlag{Name: "p", Value: &cli.IntSlice{}, Usage: "set one or more ip addr"},
+			cli.StringSliceFlag{Name: "ip", Value: &cli.StringSlice{}, Usage: "set one or more ports to open"},
 		},
 		Action: func(c *cli.Context) {
 			parsedIntSlice = c.IntSlice("p")
 			parsedStringSlice = c.StringSlice("ip")
-			// parsedOption = c.String("option")
-			// firstArg = c.Args().First()
+			parsedOption = c.String("option")
+			firstArg = c.Args().First()
 		},
 	}
 	app.Commands = []cli.Command{command}
@@ -191,7 +262,51 @@ func TestApp_ParseSliceFlags(t *testing.T) {
 	}
 
 	if !StrsEquals(parsedStringSlice, expectedStringSlice) {
-		t.Errorf("%s does not match %s", parsedStringSlice, expectedStringSlice)
+		t.Errorf("%v does not match %v", parsedStringSlice, expectedStringSlice)
+	}
+}
+
+func TestApp_DefaultStdout(t *testing.T) {
+	app := cli.NewApp()
+
+	if app.Writer != os.Stdout {
+		t.Error("Default output writer not set.")
+	}
+}
+
+type mockWriter struct {
+	written []byte
+}
+
+func (fw *mockWriter) Write(p []byte) (n int, err error) {
+	if fw.written == nil {
+		fw.written = p
+	} else {
+		fw.written = append(fw.written, p...)
+	}
+
+	return len(p), nil
+}
+
+func (fw *mockWriter) GetWritten() (b []byte) {
+	return fw.written
+}
+
+func TestApp_SetStdout(t *testing.T) {
+	w := &mockWriter{}
+
+	app := cli.NewApp()
+	app.Name = "test"
+	app.Writer = w
+
+	err := app.Run([]string{"help"})
+
+	if err != nil {
+		t.Fatalf("Run error: %s", err)
+	}
+
+	if len(w.written) == 0 {
+		t.Error("App did not write output to desired writer.")
 	}
 }
 
@@ -258,6 +373,23 @@ func TestApp_BeforeFunc(t *testing.T) {
 	if subcommandRun == true {
 		t.Errorf("Subcommand executed when NOT expected")
 	}
+
+}
+
+func TestAppNoHelpFlag(t *testing.T) {
+	oldFlag := cli.HelpFlag
+	defer func() {
+		cli.HelpFlag = oldFlag
+	}()
+
+	cli.HelpFlag = cli.BoolFlag{}
+
+	app := cli.NewApp()
+	err := app.Run([]string{"test", "-h"})
+
+	if err != flag.ErrHelp {
+		t.Errorf("expected error about missing help flag, but got: %s (%T)", err, err)
+	}
 }
 
 func TestAppHelpPrinter(t *testing.T) {
@@ -276,6 +408,26 @@ func TestAppHelpPrinter(t *testing.T) {
 
 	if wasCalled == false {
 		t.Errorf("Help printer expected to be called, but was not")
+	}
+}
+
+func TestAppVersionPrinter(t *testing.T) {
+	oldPrinter := cli.VersionPrinter
+	defer func() {
+		cli.VersionPrinter = oldPrinter
+	}()
+
+	var wasCalled = false
+	cli.VersionPrinter = func(c *cli.Context) {
+		wasCalled = true
+	}
+
+	app := cli.NewApp()
+	ctx := cli.NewContext(app, nil, nil)
+	cli.ShowVersion(ctx)
+
+	if wasCalled == false {
+		t.Errorf("Version printer expected to be called, but was not")
 	}
 }
 
@@ -300,4 +452,33 @@ func TestAppCommandNotFound(t *testing.T) {
 
 	expect(t, beforeRun, true)
 	expect(t, subcommandRun, false)
+}
+
+func TestGlobalFlagsInSubcommands(t *testing.T) {
+	subcommandRun := false
+	app := cli.NewApp()
+
+	app.Flags = []cli.Flag{
+		cli.BoolFlag{Name: "debug, d", Usage: "Enable debugging"},
+	}
+
+	app.Commands = []cli.Command{
+		cli.Command{
+			Name: "foo",
+			Subcommands: []cli.Command{
+				{
+					Name: "bar",
+					Action: func(c *cli.Context) {
+						if c.GlobalBool("debug") {
+							subcommandRun = true
+						}
+					},
+				},
+			},
+		},
+	}
+
+	app.Run([]string{"command", "-d", "foo", "bar"})
+
+	expect(t, subcommandRun, true)
 }
